@@ -531,6 +531,13 @@ esp> network key
 I (77200) : 0x4084f6f4   83 38 66 7a d8 b6 b4 b4  63 17 12 39 0f 83 f8 6a  |.8fz....c..9...j|
 ```
 
+#### `network tckey [<hex:KEY128>]`
+Set the Trust Center key:
+
+```bash
+network tckey 0x0123456789abcdeffedcba9876543210
+```
+
 #### `network legacy`
 Enable/Disable legacy device support.
 
