@@ -294,6 +294,33 @@ exit:
     return ret;
 }
 
+static esp_err_t cli_nwk_tckey(esp_zb_cli_cmd_t *self, int argc, char **argv)
+{
+    struct {
+        arg_hex_t *tckey;
+        arg_lit_t *help;
+        arg_end_t *end;
+    } argtable = {
+        .tckey = arg_hexn(NULL, NULL, "<key128:KEY>", 1, 1, "trust center key, in HEX format"),
+        .help = arg_lit0(NULL, "help", "Print this help message"),
+        .end = arg_end(2),
+    };
+    esp_err_t ret = ESP_OK;
+
+    /* Parse command line arguments */
+    EXIT_ON_FALSE(argc > 1, ESP_OK, arg_print_help((void**)&argtable, argv[0]));
+    int nerrors = arg_parse(argc, argv, (void**)&argtable);
+    EXIT_ON_FALSE(nerrors == 0, ESP_ERR_INVALID_ARG, arg_print_errors(stdout, argtable.end, argv[0]));
+
+    EXIT_ON_FALSE(argtable.tckey->hsize[0] == 16, ESP_ERR_INVALID_ARG);
+    esp_zb_secur_TC_standard_distributed_key_set(argtable.tckey->hval[0]);
+
+exit:
+    arg_hex_free(argtable.tckey);
+    ESP_ZB_CLI_FREE_ARGSTRUCT(&argtable);
+    return ret;
+}
+
 static esp_err_t cli_nwk_childmax(esp_zb_cli_cmd_t *self, int argc, char **argv)
 {
     struct {
@@ -932,6 +959,7 @@ DECLARE_ESP_ZB_CLI_CMD(channel, cli_channel,,  "Get/Set 802.15.4 channels for ne
 DECLARE_ESP_ZB_CLI_CMD_WITH_SUB(network, "Network configuration",
     ESP_ZB_CLI_SUBCMD(type,     cli_nwk_type,     "Get/Set the network type"),
     ESP_ZB_CLI_SUBCMD(key,      cli_nwk_key,      "Get/Set the network key"),
+    ESP_ZB_CLI_SUBCMD(tckey,    cli_nwk_tckey,      "Set the trust center key"),
     ESP_ZB_CLI_SUBCMD(legacy,   cli_nwk_legacy,   "Enable/Disable legacy device support"),
     ESP_ZB_CLI_SUBCMD(childmax, cli_nwk_childmax, "Get/Set max children number"),
     ESP_ZB_CLI_SUBCMD(open,     cli_nwk_open,     "Open local network"),
