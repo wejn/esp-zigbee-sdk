@@ -58,6 +58,7 @@ For specific type of argument, correct format should be provided so that it can 
 - [`reboot`](#reboot): Reboot the device.
 - [`role`](#role): Get/Set the Zigbee role of a device.
 - [`route`](#route): Route information.
+- [`secur`](#secur): Security configuration.
 - [`start`](#start): Start Zigbee stack.
 - [`tl`](#tl): TouchLink configuration.
 - [`trace`](#trace): Configure Zigbee stack trace log.
@@ -531,13 +532,6 @@ esp> network key
 I (77200) : 0x4084f6f4   83 38 66 7a d8 b6 b4 b4  63 17 12 39 0f 83 f8 6a  |.8fz....c..9...j|
 ```
 
-#### `network tckey [<hex:KEY128>]`
-Set the Trust Center key:
-
-```bash
-network tckey 0x0123456789abcdeffedcba9876543210
-```
-
 #### `network legacy`
 Enable/Disable legacy device support.
 
@@ -715,6 +709,20 @@ Dump the route table in current node.
 |   1 | 0x3095 | 0x83a6 |   59 | Active | 0x00 |
 ```
 
+### secur
+Security configuration.
+
+#### `secur tckey [-t <type:D|P>] [<hex:KEY128>]`
+Set the Trust Center key.
+
+The optional `-t` (`--type`) argument determines the type of trust center
+key to set: Either `d` (distributed), or `p` (preconfigured).
+
+Default is `d`.
+
+```bash
+secur tckey 0x0123456789abcdeffedcba9876543210
+```
 
 ### start
 Start Zigbee stack.
@@ -723,7 +731,6 @@ Start Zigbee stack.
 esp> start
 Start Zigbee stack
 ```
-
 
 ### tl
 TouchLink configuration.
