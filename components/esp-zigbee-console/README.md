@@ -758,6 +758,7 @@ Dump the route table in current node.
 |   1 | 0x3095 | 0x83a6 |   59 | Active | 0x00 |
 ```
 
+
 ### start
 Start Zigbee stack.
 
@@ -765,6 +766,7 @@ Start Zigbee stack.
 esp> start
 Start Zigbee stack
 ```
+
 
 ### tl
 TouchLink configuration.
