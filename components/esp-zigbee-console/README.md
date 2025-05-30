@@ -49,6 +49,7 @@ For specific type of argument, correct format should be provided so that it can 
 - [`factoryreset`](#factoryreset): Reset the device to factory new.
 - [`ic`](#ic): Install code configuration.
 - [`iperf`](#iperf): Iperf over Zigbee.
+- [`linkkey`](#linkkey): Link Key Configuration.
 - [`macfilter`](#macfilter): Zigbee stack mac filter management.
 - [`neighbor`](#neighbor): Neighbor information.
 - [`network`](#network): Network configuration.
@@ -58,7 +59,6 @@ For specific type of argument, correct format should be provided so that it can 
 - [`reboot`](#reboot): Reboot the device.
 - [`role`](#role): Get/Set the Zigbee role of a device.
 - [`route`](#route): Route information.
-- [`secur`](#secur): Security configuration.
 - [`start`](#start): Start Zigbee stack.
 - [`tl`](#tl): TouchLink configuration.
 - [`trace`](#trace): Configure Zigbee stack trace log.
@@ -458,6 +458,55 @@ iperf test throughput: 13 kbps
 ```
 
 
+### linkkey
+Link Key Configuration.
+
+#### `linkkey add [-t <type:D|C>] [<hex:KEY128>]`
+Add the security link key.
+
+The optional `-t` (`--type`) argument determines the type of link
+key to set: Either `d` (distributed), or `c` (centralized).
+
+Default is `c`.
+
+Note: the implementation calls `esp_zb_secur_multi_TC_standard_preconfigure_key_add` (for centralized)
+or `esp_zb_secur_multi_standard_distributed_key_add` (for distributed).
+
+```bash
+linkkey add 0x0123456789abcdeffedcba9876543210
+```
+
+#### `linkkey remove [-t <type:D|C>] [<hex:KEY128>]`
+Remove the security link key.
+
+The optional `-t` (`--type`) argument determines the type of link
+key to set: Either `d` (distributed), or `c` (centralized).
+
+Default is `c`.
+
+Note: the implementation calls `esp_zb_secur_multi_TC_standard_preconfigure_key_remove` (for centralized)
+or `esp_zb_secur_multi_standard_distributed_key_remove` (for distributed).
+
+```bash
+linkkey add 0x0123456789abcdeffedcba9876543210
+```
+
+#### `linkkey set [-t <type:D|C>] [<hex:KEY128>]`
+Set the default global link key.
+
+The optional `-t` (`--type`) argument determines the type of trust center
+key to set: Either `d` (distributed), or `c` (centralized).
+
+Default is `c`.
+
+Note: the implementation calls `esp_zb_secur_TC_standard_preconfigure_key_set` (for centralized)
+or `esp_zb_secur_TC_standard_distributed_key_set` (for distributed).
+
+```bash
+linkkey set 0x0123456789abcdeffedcba9876543210
+```
+
+
 ### macfilter
 Zigbee stack mac filter management.
 
@@ -707,21 +756,6 @@ Dump the route table in current node.
 |Index|DestAddr|NextHop |Expiry| State  |Flags |
 +-----+--------+--------+------+--------+------+
 |   1 | 0x3095 | 0x83a6 |   59 | Active | 0x00 |
-```
-
-### secur
-Security configuration.
-
-#### `secur tckey [-t <type:D|P>] [<hex:KEY128>]`
-Set the Trust Center key.
-
-The optional `-t` (`--type`) argument determines the type of trust center
-key to set: Either `d` (distributed), or `p` (preconfigured).
-
-Default is `d`.
-
-```bash
-secur tckey 0x0123456789abcdeffedcba9876543210
 ```
 
 ### start

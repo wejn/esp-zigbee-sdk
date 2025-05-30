@@ -483,53 +483,100 @@ exit:
     return ret;
 }
 
-/* Sub-commands of `secur` */
+/* Sub-commands of `linkkey` */
 
-static esp_err_t cli_secur_tc_key(esp_zb_cli_cmd_t *self, int argc, char **argv)
+typedef enum linkkey_op_s {
+    LKO_add,
+    LKO_remove,
+    LKO_set,
+} linkkey_op_t;
+
+static esp_err_t cli_linkkey_op(linkkey_op_t op, esp_zb_cli_cmd_t *self, int argc, char **argv)
 {
     struct {
         arg_str_t *type;
-        arg_hex_t *tckey;
+        arg_hex_t *key;
         arg_lit_t *help;
         arg_end_t *end;
     } argtable = {
-        .type = arg_str0("t", "type", "<key:d|p>", "set the key type ('d'istributed, 'p'reconfigured). Default: d"),
-        .tckey = arg_hexn(NULL, NULL, "<key128:KEY>", 1, 1, "trust center key, in HEX format"),
+        .type = arg_str0("t", "type", "<type:d|p>", "link key type: d: distributed, c: default global TC link key), default: c"),
+        .key = arg_hexn(NULL, NULL, "<key128:KEY>", 1, 1, "network key, in HEX format"),
         .help = arg_lit0(NULL, "help", "Print this help message"),
         .end = arg_end(2),
     };
     esp_err_t ret = ESP_OK;
+    bool centralized = true; // true if type: c
 
     /* Parse command line arguments */
-    EXIT_ON_FALSE(argc > 1, ESP_OK, arg_print_help((void**)&argtable, argv[0]));
     int nerrors = arg_parse(argc, argv, (void**)&argtable);
+    EXIT_ON_FALSE(argtable.help->count == 0, ESP_OK, arg_print_help((void**)&argtable, argv[0]));
     EXIT_ON_FALSE(nerrors == 0, ESP_ERR_INVALID_ARG, arg_print_errors(stdout, argtable.end, argv[0]));
 
-    EXIT_ON_FALSE(argtable.tckey->hsize[0] == 16, ESP_ERR_INVALID_ARG);
+    EXIT_ON_FALSE(argtable.key->hsize[0] == 16, ESP_ERR_INVALID_ARG);
 
     if (argtable.type->count > 0) {
         switch (argtable.type->sval[0][0]) {
             case 'd':
             case 'D':
-                esp_zb_secur_TC_standard_distributed_key_set(argtable.tckey->hval[0]);
+                centralized = false;
                 break;
-            case 'p':
-            case 'P':
-                esp_zb_secur_TC_standard_preconfigure_key_set(argtable.tckey->hval[0]);
+            case 'c':
+            case 'C':
+                centralized = true;
                 break;
             default:
-                EXIT_ON_ERROR(ESP_ERR_INVALID_ARG, cli_output_line("secur tckey: invalid argument to option --type"));
+                EXIT_ON_ERROR(ESP_ERR_INVALID_ARG, cli_output("%s: invalid argument to option --type\n", argv[0]));
+                break;
+        }
+    }
+
+    if (centralized) {
+        switch (op) {
+            case LKO_set:
+                esp_zb_secur_TC_standard_preconfigure_key_set(argtable.key->hval[0]);
+                break;
+            case LKO_add:
+                ret = esp_zb_secur_multi_TC_standard_preconfigure_key_add(argtable.key->hval[0]);
+                break;
+            case LKO_remove:
+                ret = esp_zb_secur_multi_TC_standard_preconfigure_key_remove(argtable.key->hval[0]);
                 break;
         }
     } else {
-        esp_zb_secur_TC_standard_distributed_key_set(argtable.tckey->hval[0]);
+        switch (op) {
+            case LKO_set:
+                esp_zb_secur_TC_standard_distributed_key_set(argtable.key->hval[0]);
+                break;
+            case LKO_add:
+                ret = esp_zb_secur_multi_standard_distributed_key_add(argtable.key->hval[0]);
+                break;
+            case LKO_remove:
+                ret = esp_zb_secur_multi_standard_distributed_key_remove(argtable.key->hval[0]);
+                break;
+        }
     }
 
 exit:
-    arg_hex_free(argtable.tckey);
+    arg_hex_free(argtable.key);
     ESP_ZB_CLI_FREE_ARGSTRUCT(&argtable);
     return ret;
 }
+
+static esp_err_t cli_linkkey_add(esp_zb_cli_cmd_t *self, int argc, char **argv)
+{
+    return cli_linkkey_op(LKO_add, self, argc, argv);
+}
+
+static esp_err_t cli_linkkey_remove(esp_zb_cli_cmd_t *self, int argc, char **argv)
+{
+    return cli_linkkey_op(LKO_remove, self, argc, argv);
+}
+
+static esp_err_t cli_linkkey_set(esp_zb_cli_cmd_t *self, int argc, char **argv)
+{
+    return cli_linkkey_op(LKO_set, self, argc, argv);
+}
+
 
 /* Sub-commands of `ic` */
 
@@ -987,8 +1034,10 @@ DECLARE_ESP_ZB_CLI_CMD_WITH_SUB(network, "Network configuration",
     ESP_ZB_CLI_SUBCMD(scan,     cli_nwk_scan,     "Scan for network"),
     ESP_ZB_CLI_SUBCMD(ed_scan,  cli_nwk_ed_scan,  "Scan for energy detect on channels"),
 );
-DECLARE_ESP_ZB_CLI_CMD_WITH_SUB(secur, "Security configuration",
-    ESP_ZB_CLI_SUBCMD(tckey,   cli_secur_tc_key,  "Set the trust center key"),
+DECLARE_ESP_ZB_CLI_CMD_WITH_SUB(linkkey, "Link Key Configuration",
+    ESP_ZB_CLI_SUBCMD(add,    cli_linkkey_add,     "Add default security link key"),
+    ESP_ZB_CLI_SUBCMD(remove, cli_linkkey_remove,  "Remove default security link key"),
+    ESP_ZB_CLI_SUBCMD(set,    cli_linkkey_set,     "Set default security link key"),
 );
 DECLARE_ESP_ZB_CLI_CMD_WITH_SUB(ic, "Install code configuration",
     ESP_ZB_CLI_SUBCMD(policy, cli_ic_policy, "Set install code policy"),
